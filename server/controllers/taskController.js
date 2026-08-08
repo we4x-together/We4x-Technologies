@@ -15,7 +15,6 @@ export const createTask = async (req, res) => {
       assigneeId,
       due_date,
     } = req.body;
-    const { origin } = req.body;
 
     //Check if user has admin role for project
     const project = await prisma.project.findUnique({
@@ -55,13 +54,17 @@ export const createTask = async (req, res) => {
       include: { assignee: true },
     });
 
-    await inngest.send({
-      name: "app/task.assigned",
-      data: {
-        taskId: task.id,
-        origin,
-      },
-    });
+    const appUrl = process.env.CLIENT_URL || "https://we4x.in";
+
+const taskUrl = `${appUrl}/taskDetails?projectId=${projectId}&taskId=${task.id}`;
+
+await inngest.send({
+  name: "app/task.assigned",
+  data: {
+    taskId: task.id,
+    origin: taskUrl,
+  },
+});
     res.json({ task: taskWithAssignee, message: "Task creates successfully" });
   } catch (error) {
     console.log(error);
